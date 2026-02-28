@@ -1,37 +1,39 @@
 import { collectEffects } from '../../hooks/useBuffs';
 
+const BASE = import.meta.env.BASE_URL;
+
 const GIF_MAP = {
-    player1: '/asset/ANIMATION ON CARDS/MandirigmaCard.gif',
-    player2: '/asset/ANIMATION ON CARDS/BaganiCard.gif',
-    player3: '/asset/ANIMATION ON CARDS/BabaylanCard.gif',
-    player4: '/asset/ANIMATION ON CARDS/MangagayawCard.gif',
+    player1: `${BASE}asset/ANIMATION ON CARDS/MandirigmaCard.gif`,
+    player2: `${BASE}asset/ANIMATION ON CARDS/BaganiCard.gif`,
+    player3: `${BASE}asset/ANIMATION ON CARDS/BabaylanCard.gif`,
+    player4: `${BASE}asset/ANIMATION ON CARDS/MangagayawCard.gif`,
 };
 
 const SKILL_CARD_MAP = {
     // Mandirigma
-    'Attack':          '/asset/ALL CARDS/SKILL CARDS/Mandirigma/MandirigmaAttack.jpg',
-    'Heavy Attack':    '/asset/ALL CARDS/SKILL CARDS/Mandirigma/MandirigmaHeavy_Attack.jpg',
-    'All-in Attack':   '/asset/ALL CARDS/SKILL CARDS/Mandirigma/MandirigmaAll-In_Attack.jpg',
-    'Rest':            '/asset/ALL CARDS/SKILL CARDS/Mandirigma/MandirigmaRest.jpg',
-    'Berserk':         '/asset/ALL CARDS/SKILL CARDS/Mandirigma/MandirigmaBerserk.jpg',
+    'Attack':          `${BASE}asset/ALL CARDS/SKILL CARDS/Mandirigma/MandirigmaAttack.jpg`,
+    'Heavy Attack':    `${BASE}asset/ALL CARDS/SKILL CARDS/Mandirigma/MandirigmaHeavy_Attack.jpg`,
+    'All-in Attack':   `${BASE}asset/ALL CARDS/SKILL CARDS/Mandirigma/MandirigmaAll-In_Attack.jpg`,
+    'Rest':            `${BASE}asset/ALL CARDS/SKILL CARDS/Mandirigma/MandirigmaRest.jpg`,
+    'Berserk':         `${BASE}asset/ALL CARDS/SKILL CARDS/Mandirigma/MandirigmaBerserk.jpg`,
     // Bagani
-    'Shield Bash':     '/asset/ALL CARDS/SKILL CARDS/Bagani/BaganiShield_Bash.jpg',
-    'Fortify':         '/asset/ALL CARDS/SKILL CARDS/Bagani/BaganiFortify.jpg',
-    'Last Stand':      '/asset/ALL CARDS/SKILL CARDS/Bagani/BaganiLast_Stand.jpg',
-    "Guardian's Oath": '/asset/ALL CARDS/SKILL CARDS/Bagani/BaganiGuardians_Oath.jpg',
-    'Taunt':           '/asset/ALL CARDS/SKILL CARDS/Bagani/BaganiTaunt.jpg',
+    'Shield Bash':     `${BASE}asset/ALL CARDS/SKILL CARDS/Bagani/BaganiShield_Bash.jpg`,
+    'Fortify':         `${BASE}asset/ALL CARDS/SKILL CARDS/Bagani/BaganiFortify.jpg`,
+    'Last Stand':      `${BASE}asset/ALL CARDS/SKILL CARDS/Bagani/BaganiLast_Stand.jpg`,
+    "Guardian's Oath": `${BASE}asset/ALL CARDS/SKILL CARDS/Bagani/BaganiGuardians_Oath.jpg`,
+    'Taunt':           `${BASE}asset/ALL CARDS/SKILL CARDS/Bagani/BaganiTaunt.jpg`,
     // Babaylan
-    'Heal':            '/asset/ALL CARDS/SKILL CARDS/Babaylan/BabaylanHeal.jpg',
-    'Blessing':        '/asset/ALL CARDS/SKILL CARDS/Babaylan/BabaylanBlessing.jpg',
-    'Mana Surge':      '/asset/ALL CARDS/SKILL CARDS/Babaylan/BabaylanMana_Surge.jpg',
-    'Purify':          '/asset/ALL CARDS/SKILL CARDS/Babaylan/BabaylanPurify.jpg',
-    'Sacrifice':       '/asset/ALL CARDS/SKILL CARDS/Babaylan/BabaylanSacrifice.jpg',
+    'Heal':            `${BASE}asset/ALL CARDS/SKILL CARDS/Babaylan/BabaylanHeal.jpg`,
+    'Blessing':        `${BASE}asset/ALL CARDS/SKILL CARDS/Babaylan/BabaylanBlessing.jpg`,
+    'Mana Surge':      `${BASE}asset/ALL CARDS/SKILL CARDS/Babaylan/BabaylanMana_Surge.jpg`,
+    'Purify':          `${BASE}asset/ALL CARDS/SKILL CARDS/Babaylan/BabaylanPurify.jpg`,
+    'Sacrifice':       `${BASE}asset/ALL CARDS/SKILL CARDS/Babaylan/BabaylanSacrifice.jpg`,
     // Mangangayaw
-    'Quick Shot':      '/asset/ALL CARDS/SKILL CARDS/Mangangayaw/MangangayawQuick_Shot.jpg',
-    'Piercing Arrow':  '/asset/ALL CARDS/SKILL CARDS/Mangangayaw/MangangayawPiercing_Arrow.jpg',
-    'Volley':          '/asset/ALL CARDS/SKILL CARDS/Mangangayaw/MangangayawVolley.jpg',
-    'Focus Aim':       '/asset/ALL CARDS/SKILL CARDS/Mangangayaw/MangangayawFocus_Aim.jpg',
-    'Explosive Arrow': '/asset/ALL CARDS/SKILL CARDS/Mangangayaw/MangangayawExplosive_Arrow.jpg',
+    'Quick Shot':      `${BASE}asset/ALL CARDS/SKILL CARDS/Mangangayaw/MangangayawQuick_Shot.jpg`,
+    'Piercing Arrow':  `${BASE}asset/ALL CARDS/SKILL CARDS/Mangangayaw/MangangayawPiercing_Arrow.jpg`,
+    'Volley':          `${BASE}asset/ALL CARDS/SKILL CARDS/Mangangayaw/MangangayawVolley.jpg`,
+    'Focus Aim':       `${BASE}asset/ALL CARDS/SKILL CARDS/Mangangayaw/MangangayawFocus_Aim.jpg`,
+    'Explosive Arrow': `${BASE}asset/ALL CARDS/SKILL CARDS/Mangangayaw/MangangayawExplosive_Arrow.jpg`,
 };
 
 /** Normalize curly/smart quotes to straight apostrophe for safe comparison */

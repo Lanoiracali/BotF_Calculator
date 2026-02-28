@@ -1,7 +1,7 @@
 /* Custom font */
 @font-face {
     font-family: "BoldPixels";
-    src: url(font/BoldPixels-BF689223dae4f35.otf) format("opentype");
+    src: url(assets/font/BoldPixels-BF689223dae4f35.otf) format("opentype");
 }
 
 /* Fixed Resolution Scaling - Container approach */

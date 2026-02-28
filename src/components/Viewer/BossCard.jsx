@@ -1,15 +1,17 @@
 import { collectEffects } from '../../hooks/useBuffs';
 
+const BASE = import.meta.env.BASE_URL;
+
 const BOSS_IMAGE_MAP = {
-    Bathala:     '/asset/ALL CARDS/BOSS CARDS/bathalaFinal.jpg',
-    Mayari:      '/asset/ALL CARDS/BOSS CARDS/mayariFinal.jpg',
-    Apolaki:     '/asset/ALL CARDS/BOSS CARDS/apolakiFinal.jpg',
-    Bakunawa:    '/asset/ALL CARDS/BOSS CARDS/bakunawaFinal.jpg',
-    Minokawa:    '/asset/ALL CARDS/BOSS CARDS/minokawaFinal.jpg',
-    Manananggal: '/asset/ALL CARDS/BOSS CARDS/manananggalFinal.jpg',
-    Tiyanak:     '/asset/ALL CARDS/BOSS CARDS/tiyanakFinal.jpg',
-    Siren:       '/asset/ALL CARDS/BOSS CARDS/sirenFinal.jpg',
-    Kapre:       '/asset/ALL CARDS/BOSS CARDS/kapreFinal.jpg',
+    Bathala:     `${BASE}asset/ALL CARDS/BOSS CARDS/bathalaFinal.jpg`,
+    Mayari:      `${BASE}asset/ALL CARDS/BOSS CARDS/mayariFinal.jpg`,
+    Apolaki:     `${BASE}asset/ALL CARDS/BOSS CARDS/apolakiFinal.jpg`,
+    Bakunawa:    `${BASE}asset/ALL CARDS/BOSS CARDS/bakunawaFinal.jpg`,
+    Minokawa:    `${BASE}asset/ALL CARDS/BOSS CARDS/minokawaFinal.jpg`,
+    Manananggal: `${BASE}asset/ALL CARDS/BOSS CARDS/manananggalFinal.jpg`,
+    Tiyanak:     `${BASE}asset/ALL CARDS/BOSS CARDS/tiyanakFinal.jpg`,
+    Siren:       `${BASE}asset/ALL CARDS/BOSS CARDS/sirenFinal.jpg`,
+    Kapre:       `${BASE}asset/ALL CARDS/BOSS CARDS/kapreFinal.jpg`,
 };
 
 function HPSection({ stats, bossId }) {

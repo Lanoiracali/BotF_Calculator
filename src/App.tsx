@@ -21,7 +21,7 @@ class ErrorBoundary extends Component<{ children: any }, { error: Error | null }
 export default function App() {
     return (
         <ErrorBoundary>
-            <BrowserRouter>
+            <BrowserRouter basename={import.meta.env.BASE_URL}>
                 <Routes>
                     <Route path="/admin" element={<Admin />} />
                     <Route path="/" element={<Viewer />} />

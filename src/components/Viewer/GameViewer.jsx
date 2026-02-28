@@ -14,10 +14,12 @@ const MUSIC_MAP = {
     Kapre:       'KALUWALHATIAN.mp3',
 };
 
+const BASE = import.meta.env.BASE_URL;
+
 const DUNGEON_BUFFS = [
-    { id: 1, name: 'Balaraw', desc: '+15% DMG', img: '/asset/ALL CARDS/SPECIAL ITEM CARDS/Balaraw.jpg' },
-    { id: 2, name: 'Kalasag',    desc: '+25% DEF', img: '/asset/ALL CARDS/SPECIAL ITEM CARDS/Kalasag.jpg' },
-    { id: 3, name: 'Agos-Oras',        desc: 'No CD', img: '/asset/ALL CARDS/SPECIAL ITEM CARDS/Agos-Oras.jpg' },
+    { id: 1, name: 'Balaraw',   desc: '+15% DMG', img: `${BASE}asset/ALL CARDS/SPECIAL ITEM CARDS/Balaraw.jpg` },
+    { id: 2, name: 'Kalasag',   desc: '+25% DEF', img: `${BASE}asset/ALL CARDS/SPECIAL ITEM CARDS/Kalasag.jpg` },
+    { id: 3, name: 'Agos-Oras', desc: 'No CD',    img: `${BASE}asset/ALL CARDS/SPECIAL ITEM CARDS/Agos-Oras.jpg` },
 ];
 
 export function GameViewer() {
@@ -71,7 +73,7 @@ export function GameViewer() {
         currentBossRef.current = boss;
         const file = MUSIC_MAP[boss];
         if (!file) return;
-        const path = `/asset/BGMUSIC/NEW MAP OST/${file}`;
+        const path = `${BASE}asset/BGMUSIC/NEW MAP OST/${file}`;
         audioRef.current.pause();
         audioRef.current.src = path;
         audioRef.current.play().catch(() => {});
@@ -87,8 +89,8 @@ export function GameViewer() {
     }, []);
 
     const bg = gameState?.bakunawaPhase2Active
-        ? '/asset/Background_Mino.png'
-        : '/asset/Background.png';
+        ? `${BASE}asset/Background_Mino.png`
+        : `${BASE}asset/Background.png`;
 
     if (!gameState) {
         return (
