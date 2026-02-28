@@ -3,9 +3,9 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Admin } from './pages/Admin';
 import { Viewer } from './pages/Viewer';
 
-class ErrorBoundary extends Component<{ children: any }, { error: any }> {
-    state = { error: null };
-    static getDerivedStateFromError(e: any) { return { error: e }; }
+class ErrorBoundary extends Component<{ children: any }, { error: Error | null }> {
+    state = { error: null as Error | null };
+    static getDerivedStateFromError(e: Error) { return { error: e }; }
     render() {
         if (this.state.error) {
             return (
