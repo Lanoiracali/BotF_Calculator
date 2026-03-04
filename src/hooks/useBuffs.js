@@ -20,10 +20,10 @@ export function collectEffects(entity, s) {
 
     // Player buffs
     if (entity === 'player1' && s.mandirigmaRageBuff?.turnsLeft > 0)
-        push('Rage', 'buff', s.mandirigmaRageBuff.turnsLeft, 'dmg+50%, defignore+20%');
+        push('Enraged', 'buff', s.mandirigmaRageBuff.turnsLeft, 'dmg+50%, defIgnore+20%, hit+20%');
 
     if (entity === 'player2' && s.baganiLastStandBuff?.turnsLeft > 0)
-        push('Last Stand', 'buff', s.baganiLastStandBuff.turnsLeft, 'def+50%');
+        push('On Guard', 'buff', s.baganiLastStandBuff.turnsLeft, 'def+40%');
 
     if (entity === 'player2' && s.tauntBuff?.turnsLeft > 0)
         push('Taunt', 'buff', s.tauntBuff.turnsLeft, 'boss targets Bagani');
@@ -32,14 +32,14 @@ export function collectEffects(entity, s) {
         push('Blessing', 'buff', s.blessingBuff[entity], 'dmg+20%');
 
     if (s.focusAimBuff?.[entity]?.turnsLeft > 0)
-        push('Focus Aim', 'buff', s.focusAimBuff[entity].turnsLeft, 'defignore+20%');
+        push('Focused Aim', 'buff', s.focusAimBuff[entity].turnsLeft, 'defignore+20%');
 
     // Boss buffs
     if (entity === 'boss' && s.bathalaMandateBuff?.turnsLeft > 0)
-        push("Heaven's Mandate", 'buff', s.bathalaMandateBuff.turnsLeft, 'def+30%');
+        push('On Guard', 'buff', s.bathalaMandateBuff.turnsLeft, 'def+40%');
 
     if (entity === 'boss' && s.daybreakFuryBuff?.turnsLeft > 0)
-        push('Daybreak Fury', 'buff', s.daybreakFuryBuff.turnsLeft, 'atk+40%, defignore+20%');
+        push('Enraged', 'buff', s.daybreakFuryBuff.turnsLeft, 'dmg+50%, defIgnore+20%, hit+20%');
 
     if ((entity === 'boss' || entity === 'boss2') && s.strengthenedBuff?.[entity]?.attacksLeft > 0)
         push('Strengthened', 'buff', s.strengthenedBuff[entity].attacksLeft, 'next dmg x2');
@@ -47,9 +47,11 @@ export function collectEffects(entity, s) {
     if (entity === 'boss' && s.bossInvulnerable?.turnsLeft > 0)
         push('Invulnerable', 'buff', s.bossInvulnerable.turnsLeft, 'immune to damage');
 
-    // Debuffs
+    // Taunted debuff on boss/boss2
+    if ((entity === 'boss' || entity === 'boss2') && s.tauntBuff?.turnsLeft > 0)
+        push('Taunted', 'debuff', s.tauntBuff.turnsLeft, 'forced to target Bagani');
     if (s.bonecrackedDebuffs?.[entity])
-        push('Bone Cracked', 'debuff', s.bonecrackedDebuffs[entity].turnsLeft, 'def-10%');
+        push('Bonecracked', 'debuff', s.bonecrackedDebuffs[entity].turnsLeft, 'def-10%');
 
     if (s.bindDebuffs?.[entity])
         push('Bind', 'debuff', s.bindDebuffs[entity].turnsLeft, 'def-15%');

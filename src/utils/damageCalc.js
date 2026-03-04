@@ -68,10 +68,6 @@ export function calculateDamage(attacker, target, damagePercent, flatdamage = 0,
         let atk = attackerStats.atk || 0;
         const mag = attackerStats.mag || 0;
 
-        // Daybreak Fury ATK boost (boss only)
-        if (daybreakActive && (daybreakFuryBuff.atkIncrease || 0) > 0)
-            atk = atk * (1 + daybreakFuryBuff.atkIncrease);
-
         if (dmgMultiplier !== 1) {
             // Special combined multiplier (e.g. Celestial Judgement)
             const combined = (atk * (damagePercent || 0)) + (mag * (magPercentDamage || 0));
@@ -81,6 +77,10 @@ export function calculateDamage(attacker, target, damagePercent, flatdamage = 0,
             const magDamage = ((flatdamage || 0) + (mag * (magPercentDamage || 0))) / (1.5 * (1 + def * 0.01));
             dmg = atkDamage + magDamage;
         }
+
+        // Enraged (Daybreak Fury) — final DMG multiplier for boss
+        if (daybreakActive && (daybreakFuryBuff.atkIncrease || 0) > 0)
+            dmg = dmg * (1 + daybreakFuryBuff.atkIncrease);
 
         // Strengthened buff multiplier (consumption handled by caller via consumeStrengthened)
         if (strengthenedBuff?.[attacker]?.attacksLeft > 0)

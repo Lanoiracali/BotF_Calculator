@@ -185,6 +185,7 @@ body {
     align-items: center;
     height: 389px;
     margin-top: 31px;
+    position: relative;
 }
 
 .character-image {
@@ -310,7 +311,7 @@ body {
 .status-effect {
     padding: 1px 4px;
     border-radius: 4px;
-    font-size: 9px;
+    font-size: 15px;
     font-weight: bold;
     color: black;
     white-space: nowrap;
@@ -395,7 +396,7 @@ body {
 /* Boss Stats - FIXED PIXELS */
 .boss-stats {
     min-height: 80px;
-    padding: 6px 165px 0 140px;
+    padding: 0 165px 0 140px;
     border-radius: 8px;
 }
 
@@ -438,7 +439,7 @@ body {
 }
 
 .boss-card .skill-name {
-    font-size: 21px;
+    font-size: 25px;
     font-weight: bold;
     color: #da70d6;
     text-align: center;
@@ -548,7 +549,7 @@ body {
 }
 
 .boss-active-skill-unified .skill-name {
-    font-size: 21px;
+    font-size: 25px;
     font-weight: bold;
     color: #da70d6;
     text-align: center;
@@ -583,4 +584,48 @@ body {
 .boss-card .status-effects-section::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.4);
     border-radius: 4px;
+}
+
+/* ---- Banner overlay (miniboss / mainboss / victory / defeat) ---- */
+.banner-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 8000;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: banner-fadein 0.4s ease;
+}
+.banner-overlay--hiding {
+    animation: banner-fadeout 0.4s ease forwards;
+}
+.banner-overlay--clickable {
+    cursor: pointer;
+}
+.banner-img {
+    width: 100vw;
+    height: 100vh;
+    object-fit: fill;
+}
+.banner-img--half {
+    width: 50vw;
+    height: 50vh;
+    object-fit: contain;
+}
+@keyframes banner-fadein {
+    from { opacity: 0; transform: scale(1.06); }
+    to   { opacity: 1; transform: scale(1); }
+}
+@keyframes banner-fadeout {
+    from { opacity: 1; transform: scale(1); }
+    to   { opacity: 0; transform: scale(0.94); }
+}
+
+/* ---- Loading video overlay ---- */
+.loading-video-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: #000;
 }

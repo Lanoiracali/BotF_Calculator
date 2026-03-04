@@ -7,9 +7,14 @@ import { bossSkills } from '../../data';
 import { HPBar } from '../shared/HPBar';
 import { StatusEffects } from '../shared/StatusEffects';
 
-const BOSS_OPTIONS = ['Bathala','Mayari','Apolaki','Bakunawa','Manananggal','Tiyanak','Siren','Kapre'];
+const REGION_BOSSES: Record<string, { mini: string; main: string }> = {
+    daragangmagayon: { mini: 'Tiyanak',      main: 'Apolaki'  },
+    dagatkabisayaan: { mini: 'Siren',         main: 'Bakunawa' },
+    bundokpulag:     { mini: 'Manananggal',   main: 'Mayari'   },
+    kaluwalhatian:   { mini: 'Kapre',         main: 'Bathala'  },
+};
 
-function SingleBoss({ bossId, title, skills, target, setTarget, onSkill }: any) {
+function SingleBoss({ bossId, title, skills, target, setTarget, isTurnActive = true, onSkill }: any) {
     const stats = useGameStore(useShallow((s: any) => {
         const p = s.playersStats[bossId];
         return { hp: p?.hp ?? 0, maxHp: p?.maxHp ?? 1, atk: p?.atk ?? 0, def: p?.def ?? 0, mag: p?.mag ?? 0, shield: p?.shield ?? 0 };
@@ -38,7 +43,7 @@ function SingleBoss({ bossId, title, skills, target, setTarget, onSkill }: any) 
                 </select>
             </label>
 
-            <div className="boss-skills">
+            <div className="boss-skills" style={!isTurnActive ? { opacity: 0.4, filter: 'grayscale(0.8)', pointerEvents: 'none' } : undefined}>
                 {(skills || []).map((skill: any, idx: number) => (
                     <div key={idx} className="skill">
                         <button onClick={() => onSkill(idx, target)}>{skill.name}</button>
@@ -55,6 +60,22 @@ export function BossPanel() {
     const phase2            = useGameStore((s: any) => s.bakunawaPhase2Active);
     const applyPreset       = useGameStore((s: any) => s.applyPreset);
     const actionLog         = useGameStore((s: any) => s.actionLog);
+    const setupLocked       = useGameStore((s: any) => s.setupLocked);
+    const currentTurnIndex  = useGameStore((s: any) => s.currentTurnIndex);
+    const gamePhase         = useGameStore((s: any) => s.gamePhase);
+    const selectedRegion    = useGameStore((s: any) => s.selectedRegion);
+    const onMap             = gamePhase === 'map';
+
+    // Build the boss options scoped to the active region.
+    // Outside of battle (no region yet), fall back to showing all bosses.
+    const regionCfg = selectedRegion ? REGION_BOSSES[selectedRegion] : null;
+    const bossOptions: string[] = regionCfg
+        ? [regionCfg.mini, regionCfg.main]
+        : Object.values(REGION_BOSSES).flatMap(r => [r.mini, r.main]);
+
+    // Determine whose boss turn it is
+    const isBossActiveTurn    = setupLocked ? (phase2 ? currentTurnIndex === 5 : (currentTurnIndex === 4 || currentTurnIndex === 5)) : false;
+    const isMinokawaActiveTurn = setupLocked ? currentTurnIndex === 4 : false;
 
     const { entityAttack, minokawaAttack } = useCombat();
 
@@ -65,12 +86,12 @@ export function BossPanel() {
     const minokawaSkillList = (bossSkills as any)['Minokawa'] ?? [];
 
     return (
-        <div className="boss-container">
+        <div className="boss-container" style={onMap ? { opacity: 0.35, pointerEvents: 'none' } : undefined}>
             {/* Preset selector */}
             <label>Select Preset:
                 <select value={currentBoss}
                     onChange={e => applyPreset('boss', e.target.value)}>
-                    {BOSS_OPTIONS.map(b => <option key={b} value={b}>{b}</option>)}
+                    {bossOptions.map(b => <option key={b} value={b}>{b}</option>)}
                 </select>
             </label>
 
@@ -81,6 +102,7 @@ export function BossPanel() {
                 skills={bossSkillList}
                 target={bossTarget}
                 setTarget={setBossTarget}
+                isTurnActive={isBossActiveTurn}
                 onSkill={(idx: number, tgt: string) => entityAttack(idx, tgt)}
             />
 
@@ -94,6 +116,7 @@ export function BossPanel() {
                         skills={minokawaSkillList}
                         target={minokawaTarget}
                         setTarget={setMinokawaTarget}
+                        isTurnActive={isMinokawaActiveTurn}
                         onSkill={(idx: number, tgt: string) => minokawaAttack(idx, tgt)}
                     />
                 </>

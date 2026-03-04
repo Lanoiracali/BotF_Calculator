@@ -1,6 +1,6 @@
 export const bossSkills = {
     Bathala: [
-        { name: "Heaven's Mandate (Buff)", heavens_mandate: true, def_increase: 0.3, remove_debuff: true, duration: 3, description: "Increase DEF 30% for 3 turns, removes debuff, unstackable" },
+        { name: "Heaven's Mandate (Buff)", heavens_mandate: true, def_increase: 0.3, remove_debuff: true, duration: 3, description: "Do On Guard on self, removes debuff, unstackable" },
         { name: "Skyhammer (Single Target)", magPercentDamage: 1.75, description: "175% MAG on a player, 30% chance to stun 1p" },
         { name: "Thunderous Decree (AoE)", magPercentDamage: 1.25, hitsAll: true, description: "125% MAG on all players, 30% stun 2p" },
         { name: "Celestial Judgement (Ultimate)", damagePercent: 1, magPercentDamage: 1, dmgMultiplier: 3, description: "combine ATK and MAG with a multiplier of 3.0, rest 1 turn" }
@@ -9,12 +9,12 @@ export const bossSkills = {
         { name: "Moonlight Grace (Heal)", healPercent_maxHp: 0.25, description: "Heals self for 25% of max HP." },
         { name: "Lunar Strike (Single Target)", damagePercent: 1.15, magPercentDamage: 0.2, description: "115% ATK + 20% MAG." },
         { name: "Moonfall Spear (Single Target, Debuff)", damagePercent: 1.05, moonfall_debuff: true, reduce_enemyDEF: 0.2, duration: 2, description: "Deals 105% ATK + Moonfall to a player." },
-        { name: "Tide of Night (Buff, Low AoE Damage)", enemyDamage_currHp: 0.3, invulnerable_turn: 1, remove_debuff: true, hitsAll: true, description: "Creates a mist that will damage all its opponent 30% to its current HP, remove debuff" }
+        { name: "Tide of Night (Buff, Low AoE Damage)", enemyDamage_currHp: 0.3, invulnerable_turn: 1, remove_debuff: true, hitsAll: true, description: "Creates a mist that will damage all its opponent 30% to its current HP, remove debuff, invulnerable for next turn" }
     ],
     Apolaki: [
         { name: "Solar Flare Slash (Damage)", damagePercent: 1.75, description: "Deals 175% ATK to a player." },
         { name: "Radiant Charge (Dash Attack)", damagePercent: 0.8, magPercentDamage: 1, hitsAll: true, description: "Deals 80% ATK + 100% MAG to all players." },
-        { name: "Daybreak Fury (Self Buff)", daybreak_fury: true, atk_increase: 0.4, defIgnore_buff: 0.2, currHP_sac: 0.3, duration: 1, description: "Increase 40% of its ATK and ignores 20% DEF for the next turn. Sacrifice 30% current HP" },
+        { name: "Daybreak Fury (Self Buff)", daybreak_fury: true, atk_increase: 0.4, defIgnore_buff: 0.2, currHP_sac: 0.3, duration: 1, description: "Enrages for the next turn. Sacrifice 30% current HP" },
         { name: "Sunburst Nova (AoE Burst)", damagePercent: 1, magPercentDamage: 1.25, dmgMultiplier: 1.2, hitsAll: true, description: "Deals 1.2x(100% ATK + 125% MAG), dealing AOE damage to all enemies." }
     ],
     Bakunawa: [

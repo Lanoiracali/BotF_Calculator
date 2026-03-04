@@ -2,6 +2,8 @@ import { collectEffects } from '../../hooks/useBuffs';
 
 const BASE = import.meta.env.BASE_URL;
 
+const TURN_OUTLINE = `${BASE}asset/turnOutline.gif`;
+
 const GIF_MAP = {
     player1: `${BASE}asset/ANIMATION ON CARDS/MandirigmaCard.gif`,
     player2: `${BASE}asset/ANIMATION ON CARDS/BaganiCard.gif`,
@@ -68,6 +70,9 @@ export function HeroCard({ playerId, gameState }) {
     const debuffs = effects.filter(e => e.type === 'debuff');
     const lastSkill = getLastSkill(playerId, gameState?.actionLog);
 
+    const isActiveTurn = !!(gameState?.setupLocked &&
+        gameState?.turnSequence?.[gameState?.currentTurnIndex] === playerId);
+
     const hp     = stats?.hp    ?? 0;
     const maxHp  = stats?.maxHp ?? 1;
     const shield = stats?.shield ?? 0;
@@ -90,6 +95,17 @@ export function HeroCard({ playerId, gameState }) {
             {/* Character portrait GIF */}
             <div className="hero-portrait">
                 <img src={GIF_MAP[playerId]} alt={playerId} className="character-image" />
+                {isActiveTurn && (
+                    <img
+                        src={TURN_OUTLINE}
+                        alt="active turn"
+                        style={{
+                            position: 'absolute', top: 0, left: 0,
+                            width: '100%', height: '100%',
+                            objectFit: 'fill', pointerEvents: 'none', zIndex: 10,
+                        }}
+                    />
+                )}
             </div>
 
             {/* HP Bar */}

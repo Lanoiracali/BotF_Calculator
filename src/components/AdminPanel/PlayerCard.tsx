@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useGameStore } from '../../store/gameStore';
 import { useCombat } from '../../hooks/useCombat';
 import { useEntityEffects } from '../../hooks/useBuffs';
-import { playerSkills, presets } from '../../data';
+import { playerSkills } from '../../data';
 import { HPBar } from '../shared/HPBar';
 import { StatusEffects } from '../shared/StatusEffects';
 import { SkillButton } from './SkillButton';
@@ -15,13 +15,6 @@ const PLAYER_NAMES: Record<string, string> = {
     player4: 'Mangangayaw',
 };
 
-const PRESET_LABELS: Record<string, Record<string, string>> = {
-    player1: { glassCanon: 'Glass Canon', bruiser: 'Bruiser', berserker: 'Berserker' },
-    player2: { wall: 'Wall', juggernaut: 'Juggernaut', damageSoaker: 'Damage Soaker' },
-    player3: { pureHealer: 'Pure Healer', supportCleric: 'Support Cleric', battlePriest: 'Battle Priest' },
-    player4: { sniper: 'Sniper', ranger: 'Ranger', hunter: 'Hunter' },
-};
-
 export function PlayerCard({ playerId }: { playerId: string }) {
     // Select only primitives via useShallow — avoids shieldStacks:[] new-ref loop
     const stats = useGameStore(useShallow((s: any) => {
@@ -31,10 +24,16 @@ export function PlayerCard({ playerId }: { playerId: string }) {
     const cooldowns         = useGameStore(useShallow((s: any) => s.cooldowns[playerId] ?? {}));
     const dungeonBuff3      = useGameStore((s: any) => s.dungeonBuff3Active);
     const bakunawaPhase2    = useGameStore((s: any) => s.bakunawaPhase2Active);
-    const applyPreset       = useGameStore((s: any) => s.applyPreset);
     const isDead            = useGameStore((s: any) => s.deadEntities.has(playerId));
-    const hasActed          = useGameStore((s: any) => !s.dungeonBuff3Active && s.actedThisTurn?.has(playerId));
-    const bossDead          = useGameStore((s: any) => s.deadEntities.has('boss') || (s.playersStats?.boss?.hp ?? 1) <= 0);
+    const setupLocked       = useGameStore((s: any) => s.setupLocked);
+    const currentTurnIndex  = useGameStore((s: any) => s.currentTurnIndex);
+    const turnSequence      = useGameStore((s: any) => s.turnSequence);
+    const notMyTurn         = !setupLocked || (currentTurnIndex < 0 || currentTurnIndex >= 4 || turnSequence[currentTurnIndex] !== playerId);
+    const bossDead          = useGameStore((s: any) => {
+        const b1Dead = s.deadEntities.has('boss') || (s.playersStats?.boss?.hp ?? 1) <= 0;
+        const b2Dead = (s.playersStats?.boss2?.hp ?? 0) <= 0;
+        return s.bakunawaPhase2Active ? (b1Dead && b2Dead) : b1Dead;
+    });
     const effects           = useEntityEffects(playerId);
 
     const { attackEnemy } = useCombat();
@@ -42,32 +41,25 @@ export function PlayerCard({ playerId }: { playerId: string }) {
     const [enemyTarget, setEnemyTarget]  = useState('boss');
     const [allyTarget, setAllyTarget]    = useState(playerId);
     const [bonecrackedOn, setBonecracked] = useState(false);
+    const [overexplosionOn, setOverexplosion] = useState(false);
+
+    // Reset attack target to 'boss' whenever Bakunawa phase 2 ends
+    useEffect(() => {
+        if (!bakunawaPhase2) setEnemyTarget('boss');
+    }, [bakunawaPhase2]);
 
     const skills        = (playerSkills as any)[playerId] ?? [];
-    const playerPresets = (presets as any)[playerId] ?? {};
-    const defaultPreset = (Object.keys(playerPresets)[0] ?? '') as string;
-    const [selectedPreset, setSelectedPreset] = useState(defaultPreset);
     const name          = PLAYER_NAMES[playerId];
     const showMag       = playerId === 'player3';
 
     return (
-        <div className={`player-container${isDead ? ' dead' : ''}${hasActed ? ' acted' : ''}${bossDead ? ' boss-dead' : ''}`}
+        <div className={`player-container${isDead ? ' dead' : ''}${notMyTurn ? ' acted' : ''}${bossDead ? ' boss-dead' : ''}`}
             style={bossDead
                 ? { opacity: 0.4, filter: 'grayscale(1)', pointerEvents: 'none' }
-                : hasActed ? { opacity: 0.5, filter: 'grayscale(0.8)', pointerEvents: 'none' } : undefined}>
+                : notMyTurn ? { opacity: 0.5, filter: 'grayscale(0.8)', pointerEvents: 'none' } : undefined}>
             <h2>{name}{bossDead && <span style={{ marginLeft: 8, fontSize: '0.7em', color: '#ff4444' }}>⚔ Boss Dead — Select Next</span>}</h2>
 
-            {/* Preset */}
             <div className="controls">
-                <label>Select Preset:
-                    <select value={selectedPreset}
-                        onChange={e => { setSelectedPreset(e.target.value); applyPreset(playerId, e.target.value); }}>
-                        {Object.entries(PRESET_LABELS[playerId]).map(([k, label]) => (
-                            <option key={k} value={k}>{label as string}</option>
-                        ))}
-                    </select>
-                </label>
-
                 {/* Attack target */}
                 <label>Attack Target:
                     <select value={enemyTarget} onChange={e => setEnemyTarget(e.target.value)}>
@@ -96,6 +88,15 @@ export function PlayerCard({ playerId }: { playerId: string }) {
                         Inflict Bone Cracked (-10% DEF for 1 turn)
                     </label>
                 )}
+
+                {/* Overexplosion toggle (Mangangayaw only) */}
+                {playerId === 'player4' && (
+                    <label>
+                        <input type="checkbox" checked={overexplosionOn}
+                            onChange={e => setOverexplosion(e.target.checked)} />
+                        Overexplosion (Explosive Arrow deals 10% dmg to allies)
+                    </label>
+                )}
             </div>
 
             {/* HP Bar */}
@@ -122,7 +123,7 @@ export function PlayerCard({ playerId }: { playerId: string }) {
                             skill={skill}
                             cooldown={cd}
                             dungeonBuff3Active={dungeonBuff3}
-                            onClick={() => attackEnemy(playerId, idx, enemyTarget, allyTarget, bonecrackedOn)}
+                            onClick={() => attackEnemy(playerId, idx, enemyTarget, allyTarget, bonecrackedOn, overexplosionOn)}
                         />
                     );
                 })}

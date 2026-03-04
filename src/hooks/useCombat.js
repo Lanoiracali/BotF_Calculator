@@ -7,7 +7,7 @@ export function useCombat() {
     // ----------------------------------------------------------------
     // PLAYER ATTACK
     // ----------------------------------------------------------------
-    const attackEnemy = (player, skillIndex, enemyTarget, allyTarget, bonecrackedActive = false) => {
+    const attackEnemy = (player, skillIndex, enemyTarget, allyTarget, bonecrackedActive = false, overexplosionActive = false) => {
         const store = useGameStore.getState();
 
         if (store.deadEntities.has(player)) {
@@ -15,8 +15,24 @@ export function useCombat() {
             return;
         }
 
+        // Turn order guard — block all player actions before setup is confirmed
+        if (!store.setupLocked) {
+            store.logAction('Setup not confirmed. Confirm turn order first.');
+            return;
+        }
+        {
+            const seq = store.turnSequence;
+            const idx = store.currentTurnIndex;
+            if (idx < 0 || idx >= 4 || seq[idx] !== player) {
+                store.logAction(`It is not ${player}'s turn.`);
+                return;
+            }
+        }
+
         // Block ALL actions when the current boss is dead — agos-oras does not bypass this
-        const bossDead = store.deadEntities.has('boss') || (store.playersStats?.boss?.hp ?? 1) <= 0;
+        const boss1Dead = store.deadEntities.has('boss') || (store.playersStats?.boss?.hp ?? 1) <= 0;
+        const boss2Dead = (store.playersStats?.boss2?.hp ?? 0) <= 0;
+        const bossDead = store.bakunawaPhase2Active ? (boss1Dead && boss2Dead) : boss1Dead;
         if (bossDead) {
             store.logAction(`${player} cannot act: the boss is dead. Select the next boss or mini-boss.`);
             return;
@@ -51,6 +67,15 @@ export function useCombat() {
             store.logAction(`${player} used ${skill.name}: Self debuffs removed.`);
             store.startCooldown(player, skillKey, skill.cooldown ?? 3);
             store.markActed(player);
+            store.advanceTurn();
+            return;
+        }
+
+        // --- Pass ---
+        if (skill.pass) {
+            store.logAction(`${player} used ${skill.name}: Turn ended.`);
+            store.markActed(player);
+            store.advanceTurn();
             return;
         }
 
@@ -63,13 +88,14 @@ export function useCombat() {
                 return;
             }
             store.setMandirigmaRage(skill.duration || 3, skill.dmgMultiplier_increase || 0.5, skill.defIgnore || 0.2);
-            store.logAction(`${player} used ${skill.name}: +${(skill.dmgMultiplier_increase || 0.5) * 100}% DMG, ignore ${(skill.defIgnore || 0.2) * 100}% DEF for ${skill.duration || 3} turns.`);
+            store.logAction(`${player} used ${skill.name}: Enraged! +50% DMG, ignore 20% DEF, +20% hit for ${skill.duration || 3} turns.`);
             store.startCooldown(player, skillKey, skill.cooldown ?? 4);
             store.markActed(player);
+            store.advanceTurn();
             return;
         }
 
-        // --- Last Stand (Bagani) ---
+        // --- Last Stand (Bagani) - now On Guard ---
         if (player === 'player2' && skill.last_stand) {
             const currentHp = s.playersStats[player]?.hp || 0;
             const maxHp = s.playersStats[player]?.maxHp || 1;
@@ -77,10 +103,11 @@ export function useCombat() {
                 store.logAction(`${player} cannot use ${skill.name}: HP must be ≤20%.`);
                 return;
             }
-            store.setBaganiLastStand(skill.duration || 3, skill.defIncrease || 0.5);
-            store.logAction(`${player} used ${skill.name}: +${(skill.defIncrease || 0.5) * 100}% DEF for ${skill.duration || 3} turns.`);
+            store.setBaganiLastStand(3, 0.4);
+            store.logAction(`${player} used ${skill.name}: On Guard! +40% DEF for 3 turns.`);
             store.startCooldown(player, skillKey, skill.cooldown ?? 4);
             store.markActed(player);
+            store.advanceTurn();
             return;
         }
 
@@ -90,6 +117,7 @@ export function useCombat() {
             store.logAction(`${player} used ${skill.name}: All player debuffs removed.`);
             store.startCooldown(player, skillKey, skill.cooldown ?? 2);
             store.markActed(player);
+            store.advanceTurn();
             return;
         }
 
@@ -99,6 +127,7 @@ export function useCombat() {
             store.logAction(`${player} used ${skill.name} on ${allyTarget}: +20% DMG for ${skill.duration || 2} turns.`);
             store.startCooldown(player, skillKey, skill.cooldown ?? 3);
             store.markActed(player);
+            store.advanceTurn();
             return;
         }
 
@@ -111,6 +140,7 @@ export function useCombat() {
             store.logAction(`${player} used ${skill.name}: Gained ${shieldAmt} shield.`);
             store.startCooldown(player, skillKey, skill.cooldown ?? 4);
             store.markActed(player);
+            store.advanceTurn();
             return;
         }
 
@@ -120,6 +150,7 @@ export function useCombat() {
             store.logAction(`${player} used ${skill.name}: Boss will target Bagani for ${skill.taunted_turns || 2} turns.`);
             store.startCooldown(player, skillKey, skill.cooldown ?? 2);
             store.markActed(player);
+            store.advanceTurn();
             return;
         }
 
@@ -138,6 +169,7 @@ export function useCombat() {
             store.logAction(`${player} used ${skill.name}: Sacrificed ${sacAmt} HP, shielded allies for ${shieldPerAlly}.`);
             store.startCooldown(player, skillKey, skill.cooldown ?? 4);
             store.markActed(player);
+            store.advanceTurn();
             return;
         }
 
@@ -164,6 +196,7 @@ export function useCombat() {
 
             store.startCooldown(player, skillKey, skill.cooldown ?? 2);
             store.markActed(player);
+            store.advanceTurn();
             return;
         }
 
@@ -171,7 +204,8 @@ export function useCombat() {
         if (!skill.damagePercent && !skill.flatdamage) return;
 
         const fresh = useGameStore.getState();
-        const target = enemyTarget || 'boss';
+        // If boss2 is selected but phase 2 is no longer active, fall back to boss
+        const target = (enemyTarget === 'boss2' && !fresh.bakunawaPhase2Active) ? 'boss' : (enemyTarget || 'boss');
 
         // Block damage if the target boss is already dead
         if (fresh.deadEntities.has(target) || (fresh.playersStats[target]?.hp ?? 1) <= 0) {
@@ -181,8 +215,8 @@ export function useCombat() {
 
         // Bone Cracked (Heavy Attack) - apply before damage
         if (player === 'player1' && skillIndex === 1 && bonecrackedActive) {
-            store.setBonecracked(target, 1, 0.1);
-            store.logAction(`Bone Cracked applied to ${target}: -10% DEF for 1 turn.`);
+            store.setBonecracked(target, 2, 0.1);
+            store.logAction(`Bonecracked applied to ${target}: -10% DEF for 2 turns.`);
         }
 
         const isAoE = skill.hitsAll || skill.name?.includes('Volley') || skill.name?.includes('Explosive');
@@ -191,20 +225,34 @@ export function useCombat() {
             const dmg = calculateDamage(player, tgt, skill.damagePercent || 0, skill.flatdamage || 0, 0, skill.defIgnore || 0, {}, useGameStore.getState());
             store.adjustHP(tgt, -dmg);
             store.logAction(`${player} used ${skill.name} on ${tgt}: Dealt ${dmg}`);
+            return dmg;
         };
 
+        let bossDmgDealt = 0;
         if (isAoE) {
             // Player AoE skills (Volley, Explosive Arrow) hit boss(es) only
-            doHit('boss');
+            bossDmgDealt = doHit('boss');
             if (fresh.bakunawaPhase2Active && (fresh.playersStats.boss2?.hp || 0) > 0)
                 doHit('boss2');
         } else {
             doHit(target);
         }
 
+        // Overexplosion: deal 10% of Explosive Arrow dmg to all allies
+        if (isAoE && overexplosionActive && skill.name?.includes('Explosive') && bossDmgDealt > 0) {
+            const splashDmg = Math.max(1, Math.round(bossDmgDealt * 0.1));
+            ['player1', 'player2', 'player3', 'player4'].forEach(p => {
+                if (!useGameStore.getState().deadEntities.has(p)) {
+                    store.adjustHP(p, -splashDmg);
+                    store.logAction(`Overexplosion deals ${splashDmg} to ${p}.`);
+                }
+            });
+        }
+
         if (!store.dungeonBuff3Active)
             store.startCooldown(player, skillKey, skill.cooldown ?? 2);
         store.markActed(player);
+        store.advanceTurn();
     };
 
     // ----------------------------------------------------------------
@@ -215,6 +263,21 @@ export function useCombat() {
         if (store.deadEntities.has('boss')) {
             store.logAction('Boss cannot act: entity is dead.');
             return;
+        }
+
+        // Turn order guard — block boss actions before setup is confirmed
+        if (!store.setupLocked) {
+            store.logAction('Setup not confirmed. Confirm turn order first.');
+            return;
+        }
+        {
+            const phase2 = store.bakunawaPhase2Active;
+            const idx = store.currentTurnIndex;
+            const isBossTurn = phase2 ? idx === 5 : (idx === 4 || idx === 5);
+            if (!isBossTurn) {
+                store.logAction('It is not the boss\'s turn.');
+                return;
+            }
         }
 
         // Taunt override: redirect single-target attacks to player2 if alive
@@ -233,14 +296,16 @@ export function useCombat() {
             const heal = Math.round(maxHp * skill.healPercent_maxHp);
             store.adjustHP('boss', heal);
             store.logAction(`${preset} used ${skill.name}: Healed self for ${heal} HP.`);
+            store.advanceTurn();
             return;
         }
 
-        // Bathala: Heaven's Mandate
+        // Bathala: Heaven's Mandate - now On Guard
         if (skill.heavens_mandate) {
-            store.setBathalaMandateBuff(skill.duration || 3, skill.def_increase || 0.3);
+            store.setBathalaMandateBuff(3, 0.4);
             if (skill.remove_debuff) store.cleanseBossDebuffs();
-            store.logAction(`${preset} used ${skill.name}: +${(skill.def_increase || 0.3) * 100}% DEF for ${skill.duration || 3} turns.`);
+            store.logAction(`${preset} used ${skill.name}: On Guard! +40% DEF for 3 turns.`);
+            store.advanceTurn();
             return;
         }
 
@@ -252,18 +317,20 @@ export function useCombat() {
                 store.adjustHP(p, -dmg);
                 store.logAction(`${preset} used ${skill.name} on ${p}: ${Math.round(skill.enemyDamage_currHp * 100)}% current HP (Dealt ${dmg})`);
             });
-            if (skill.invulnerable_turn) store.setBossInvulnerable(skill.invulnerable_turn);
+            if (skill.invulnerable_turn) store.setBossInvulnerable(skill.invulnerable_turn + 1);
             if (skill.remove_debuff) store.cleanseBossDebuffs();
+            store.advanceTurn();
             return;
         }
 
-        // Apolaki: Daybreak Fury
+        // Apolaki: Daybreak Fury - now Enraged
         if (skill.daybreak_fury) {
             const curr = useGameStore.getState().playersStats.boss?.hp || 0;
             const sac = Math.round(curr * (skill.currHP_sac || 0));
             if (sac > 0) store.reduceHPIgnoringShield('boss', sac);
-            store.setDaybreakFuryBuff((skill.duration || 1) + 1, skill.atk_increase || 0, skill.defIgnore_buff || 0);
-            store.logAction(`${preset} used ${skill.name}: Sacrificed ${sac} HP. Next turn +${(skill.atk_increase || 0) * 100}% ATK, ignore ${(skill.defIgnore_buff || 0) * 100}% DEF.`);
+            store.setDaybreakFuryBuff((skill.duration || 1) + 1, 0.5, 0.2);
+            store.logAction(`${preset} used ${skill.name}: Sacrificed ${sac} HP. Enraged! +50% DMG, ignore 20% DEF, +20% hit for 1 turn.`);
+            store.advanceTurn();
             return;
         }
 
@@ -276,6 +343,7 @@ export function useCombat() {
             const heal = (skill.healFrom_mag || 0) + Math.round(bossMag * (skill.healFrom_magPerc || 0));
             store.adjustHP('boss', heal);
             store.logAction(`${preset} used ${skill.name} on ${effectiveTarget}: Dealt ${dmg}, healed self for ${heal}.`);
+            store.advanceTurn();
             return;
         }
 
@@ -286,6 +354,7 @@ export function useCombat() {
             store.adjustHP(effectiveTarget, -dmg);
             store.setBindDebuff(effectiveTarget, skill.duration || 2, skill.reduce_enemyDEF || 0.15);
             store.logAction(`${preset} used ${skill.name} on ${effectiveTarget}: Dealt ${dmg}, applied Bind (-${(skill.reduce_enemyDEF || 0.15) * 100}% DEF) for ${skill.duration || 2} turns.`);
+            store.advanceTurn();
             return;
         }
 
@@ -298,6 +367,7 @@ export function useCombat() {
                 store.logAction(`${preset} used ${skill.name} on ${p}: Dealt ${dmg}, applied Devoured.`);
             });
             store.consumeStrengthened('boss');
+            store.advanceTurn();
             return;
         }
 
@@ -305,6 +375,7 @@ export function useCombat() {
         if (skill.strengthened) {
             store.setStrengthenedBuff('boss', skill.strengthened_attack_num || 1, skill.strengthened_attack_mult || 2);
             store.logAction(`${preset} used ${skill.name}: Next ${skill.strengthened_attack_num || 1} attack(s) deal ${skill.strengthened_attack_mult || 2}x damage.`);
+            store.advanceTurn();
             return;
         }
 
@@ -328,6 +399,7 @@ export function useCombat() {
             store.setMoonfallDebuff(effectiveTarget, skill.duration || 2, skill.reduce_enemyDEF || 0.2);
             store.logAction(`Applied Moonfall to ${effectiveTarget}: -${(skill.reduce_enemyDEF || 0.2) * 100}% DEF for ${skill.duration || 2} turns.`);
         }
+        store.advanceTurn();
     };
 
     // ----------------------------------------------------------------
@@ -337,6 +409,16 @@ export function useCombat() {
         const store = useGameStore.getState();
         if (store.deadEntities.has('boss2')) {
             store.logAction('Minokawa cannot act: entity is dead.');
+            return;
+        }
+
+        // Turn order guard — block Minokawa actions before setup is confirmed
+        if (!store.setupLocked) {
+            store.logAction('Setup not confirmed. Confirm turn order first.');
+            return;
+        }
+        if (store.currentTurnIndex !== 4) {
+            store.logAction('It is not Minokawa\'s turn.');
             return;
         }
 
@@ -356,6 +438,7 @@ export function useCombat() {
                 store.setEyeDragonDebuff(p, skill.duration || 2, skill.reduce_enemyDEF || 0.1);
                 store.logAction(`Minokawa used ${skill.name} on ${p}: Dealt ${dmg}, applied Eye of Dragon.`);
             });
+            store.advanceTurn();
             return;
         }
 
@@ -372,6 +455,7 @@ export function useCombat() {
                 store.adjustHP('boss2', heal);
                 store.logAction(`${effectiveTarget} defeated! Minokawa healed for ${heal}.`);
             }
+            store.advanceTurn();
             return;
         }
 
@@ -385,6 +469,7 @@ export function useCombat() {
         if (skill.hitsAll) ['player1','player2','player3','player4'].forEach(applyDmg);
         else applyDmg(effectiveTarget);
         store.consumeStrengthened('boss2');
+        store.advanceTurn();
     };
 
     return { attackEnemy, entityAttack, minokawaAttack };

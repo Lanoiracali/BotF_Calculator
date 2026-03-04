@@ -78,8 +78,24 @@ export const useGameStore = create((set, get: any) => ({
     deadBosses:   new Set<string>(),
     deadPlayers:  new Set<string>(),
 
+    // Turn order / setup
+    setupLocked: false,
+    turnOrderConfig: {
+        player1: { preset: 'glassCanon', order: 1 },
+        player2: { preset: 'wall',       order: 2 },
+        player3: { preset: 'pureHealer', order: 3 },
+        player4: { preset: 'sniper',     order: 4 },
+    } as Record<string, { preset: string; order: number }>,
+    turnSequence: ['player1','player2','player3','player4'] as string[],
+    currentTurnIndex: -1,
+
     // Action log
     actionLog: [] as string[],
+
+    // Game flow
+    gamePhase: 'setup' as 'setup' | 'map' | 'battle' | 'ending',
+    selectedRegion: null as string | null,
+    activeBanner: null as string | null,
 
     // ---- actions ----
 
@@ -100,7 +116,8 @@ export const useGameStore = create((set, get: any) => ({
         return s.deadEntities.has(entity) || (s.playersStats[entity]?.hp || 0) <= 0;
     },
 
-    adjustHP: (entity: string, change: number) => set((state: any) => {
+    adjustHP: (entity: string, change: number) => {
+      set((state: any) => {
         const stats = { ...state.playersStats };
         const es = { ...stats[entity] };
         const maxHp = es.maxHp || es.hp || 1;
@@ -160,7 +177,7 @@ export const useGameStore = create((set, get: any) => ({
                 boss2Stats = {
                     hp: Math.min(maxHP, minokawaHp + healAmount),
                     maxHp: maxHP,
-                    atk: es.atk || 0, mag: es.mag || 0, def: es.def || 0,
+                    atk: presets.boss.Minokawa.atk, mag: presets.boss.Minokawa.mag, def: presets.boss.Minokawa.def,
                     shield: 0, shieldStacks: []
                 };
                 stats.boss2 = boss2Stats;
@@ -169,6 +186,75 @@ export const useGameStore = create((set, get: any) => ({
         }
 
         return { playersStats: stats, deadEntities: newDead, deadPlayers: newDeadPlayers, deadBosses: newDeadBosses, bakunawaPhase2Active, actionLog };
+      });
+      // ---- post-update: auto boss-switch, victory, defeat triggers ----
+      const MINI_BOSSES = new Set(['Tiyanak', 'Siren', 'Manananggal', 'Kapre']);
+      const MAIN_BOSSES = new Set(['Apolaki', 'Bakunawa', 'Mayari', 'Bathala']);
+      const REGION_MAIN: Record<string,string> = {
+          daragangmagayon: 'Apolaki', dagatkabisayaan: 'Bakunawa',
+          bundokpulag: 'Mayari',     kaluwalhatian:   'Bathala',
+      };
+      const PLAYERS = ['player1','player2','player3','player4'];
+      const s = get();
+      if (s.gamePhase !== 'battle') return;
+      // Mini boss died → show victory banner and wait.
+      // Admin manually switches preset to main boss to continue.
+      if (entity === 'boss' && s.deadEntities.has('boss') && MINI_BOSSES.has(s.currentBoss) && s.selectedRegion) {
+          set({ activeBanner: 'minivictory' });
+          return;
+      }
+      // Main boss victory
+      if (entity === 'boss' || entity === 'boss2') {
+          const b1Dead = s.deadEntities.has('boss') || (s.playersStats?.boss?.hp ?? 1) <= 0;
+          const b2Dead = (s.playersStats?.boss2?.hp ?? 0) <= 0;
+          const allBossesDead = s.bakunawaPhase2Active ? (b1Dead && b2Dead) : b1Dead;
+          if (allBossesDead && MAIN_BOSSES.has(s.currentBoss)) {
+              if (s.currentBoss === 'Bathala') {
+                  // Flow 5: show victory banner first; when viewer clicks it, ending.mp4 plays
+                  set({ activeBanner: 'victory', gamePhase: 'ending' });
+              } else {
+                  (get() as any)._returnToMapWithBanner('victory');
+              }
+              return;
+          }
+      }
+      // All players dead → defeat
+      if (PLAYERS.every(p => s.deadEntities.has(p))) {
+          (get() as any)._returnToMapWithBanner('defeat');
+      }
+    },
+
+    _returnToMapWithBanner: (banner: string) => set((state: any) => {
+        const players = ['player1','player2','player3','player4'];
+        const newStats = { ...state.playersStats };
+        players.forEach(p => {
+            const es = { ...newStats[p] };
+            es.hp = es.maxHp || es.hp;
+            es.shield = 0; es.shieldStacks = [];
+            newStats[p] = es;
+        });
+        const newDead = new Set([...state.deadEntities].filter((e: string) => !players.includes(e)));
+        return {
+            playersStats: newStats,
+            deadEntities: newDead,
+            deadPlayers: new Set<string>(),
+            cooldowns: { player1: {}, player2: {}, player3: {}, player4: {} },
+            mandirigmaRageBuff: { turnsLeft: 0, dmgIncrease: 0, defIgnore: 0 },
+            baganiLastStandBuff: { turnsLeft: 0, defIncrease: 0 },
+            bathalaMandateBuff:  { turnsLeft: 0, defIncrease: 0 },
+            daybreakFuryBuff:    { turnsLeft: 0, atkIncrease: 0, defIgnore: 0 },
+            blessingBuff: {}, focusAimBuff: {}, strengthenedBuff: {},
+            bossInvulnerable: { turnsLeft: 0 },
+            bonecrackedDebuffs: {}, bindDebuffs: {}, moonfallDebuffs: {},
+            eyeDragonDebuffs: {}, devouredDebuffs: {},
+            actedThisTurn: new Set<string>(),
+            tauntBuff: { turnsLeft: 0 },
+            bakunawaPhase2Active: false,
+            currentRound: 1,
+            currentTurnIndex: 0,
+            gamePhase: 'map',
+            activeBanner: banner,
+        };
     }),
 
     reduceHPIgnoringShield: (entity: string, amount: number) => set((state: any) => {
@@ -203,9 +289,10 @@ export const useGameStore = create((set, get: any) => ({
         return { playersStats: stats };
     }),
 
-    applyPreset: (player: string, presetName: string) => set((state: any) => {
+    applyPreset: (player: string, presetName: string) => {
+        const state = get();
         const newStats = (presets as any)[player]?.[presetName];
-        if (!newStats) return {};
+        if (!newStats) return;
 
         // ---- Boss categories ----
         const MAIN_BOSSES  = ['Bathala','Mayari','Apolaki','Bakunawa','Minokawa'];
@@ -215,24 +302,26 @@ export const useGameStore = create((set, get: any) => ({
 
         // ---- Non-boss preset (player stats) — no special logic ----
         if (player !== 'boss') {
-            return {
+            set({
                 playersStats: {
                     ...state.playersStats,
                     [player]: { ...state.playersStats[player], ...newStats, maxHp: newStats.hp, shield: 0, shieldStacks: [] },
                 },
-            };
+            });
+            return;
         }
 
         // ---- Boss preset: same boss selected — just update stats ----
         if (state.currentBoss === presetName) {
             const deadBosses = new Set(state.deadBosses);
             const bossHp = deadBosses.has(presetName) ? 0 : newStats.hp;
-            return {
+            set({
                 playersStats: {
                     ...state.playersStats,
                     boss: { ...newStats, maxHp: newStats.hp, hp: bossHp, shield: 0, shieldStacks: [] },
                 },
-            };
+            });
+            return;
         }
 
         // ---- Boss switch: determine transition type ----
@@ -255,6 +344,7 @@ export const useGameStore = create((set, get: any) => ({
             actedThisTurn: new Set<string>(),
             tauntBuff: { turnsLeft: 0 },
             critActive: false,
+            currentTurnIndex: state.setupLocked ? 0 : -1,
         };
 
         // Build updated player stats
@@ -287,16 +377,26 @@ export const useGameStore = create((set, get: any) => ({
         newPlayerStats.boss2 = { hp: 0, atk: 0, mag: 0, def: 0, maxHp: 0, shield: 0, shieldStacks: [] };
         if (newBossHp <= 0) newDead.add('boss'); else newDead.delete('boss');
 
-        return {
+        set({
             ...sharedReset,
             playersStats: newPlayerStats,
             currentBoss: presetName,
             deadEntities: newDead,
             deadPlayers: newDeadPlayers,
+            // When switching mini→main: show the mainboss battle intro banner
+            // When switching anything else: leave activeBanner untouched (don't clear victory/defeat)
+            ...(miniBossToMainBoss ? { activeBanner: 'mainboss' } : {}),
             // Append sentinel so viewer clears active skill cards
             actionLog: [...state.actionLog, '[boss_switch]'],
-        };
-    }),
+        });
+
+        // Auto-hide the mainboss intro banner after 4 s
+        if (miniBossToMainBoss) {
+            setTimeout(() => {
+                if ((get() as any).activeBanner === 'mainboss') set({ activeBanner: null });
+            }, 4000);
+        }
+    },
 
     endRound: () => set((state: any) => {
         const newCooldowns = { ...state.cooldowns };
@@ -363,42 +463,35 @@ export const useGameStore = create((set, get: any) => ({
 
     clearAllCooldowns: () => set({ cooldowns: { player1: {}, player2: {}, player3: {}, player4: {} } }),
 
-    resetAll: () => set((state: any) => {
-        const preserve = {
-            dungeonBuff1Active: state.dungeonBuff1Active,
-            dungeonBuff2Active: state.dungeonBuff2Active,
-            dungeonBuff3Active: state.dungeonBuff3Active,
-            critActive: state.critActive,
-        };
+    // Soft Reset: restore HP/CDs/statuses, keep current turn order and dead states
+    softReset: () => set((state: any) => {
         const newStats = { ...state.playersStats };
-        const newDead = new Set<string>();
         const players = ['player1','player2','player3','player4'];
 
         players.forEach(p => {
             const es = { ...newStats[p] };
-            if (state.deadPlayers.has(p)) {
-                es.hp = 0;
-                newDead.add(p);
+            if (!state.deadPlayers.has(p)) {
+                es.hp = es.maxHp || es.hp; // only restore alive players
             } else {
-                es.hp = es.maxHp || es.hp;
+                es.hp = 0;
             }
             es.shield = 0; es.shieldStacks = [];
             newStats[p] = es;
         });
 
+        // Always restore boss to full HP
         const bosses: any = { ...newStats.boss };
-        if (state.deadBosses.has(state.currentBoss)) {
-            bosses.hp = 0; newDead.add('boss');
-        } else {
-            bosses.hp = bosses.maxHp || bosses.hp;
-        }
+        bosses.hp = bosses.maxHp || bosses.hp;
         bosses.shield = 0; bosses.shieldStacks = [];
         newStats.boss = bosses;
 
+        // Find first alive turn slot to restart from
+        const seq = state.turnSequence;
+        let startIdx = 0;
+        while (startIdx < 4 && state.deadPlayers.has(seq[startIdx])) startIdx++;
+
         return {
-            ...preserve,
             playersStats: newStats,
-            deadEntities: newDead,
             cooldowns: { player1: {}, player2: {}, player3: {}, player4: {} },
             mandirigmaRageBuff: { turnsLeft: 0, dmgIncrease: 0, defIgnore: 0 },
             baganiLastStandBuff: { turnsLeft: 0, defIncrease: 0 },
@@ -410,11 +503,140 @@ export const useGameStore = create((set, get: any) => ({
             eyeDragonDebuffs: {}, devouredDebuffs: {},
             actedThisTurn: new Set<string>(),
             tauntBuff: { turnsLeft: 0 },
+            currentRound: 1,
+            currentTurnIndex: startIdx,
+            // setupLocked, turnSequence, deadEntities, deadPlayers, deadBosses — unchanged
         };
     }),
 
+    // Hard Reset: wipe everything back to before game start, show ConfigPanel again
+    hardReset: () => {
+        // Flow 0: clear intro flag so the sequence replays from the start
+        localStorage.removeItem('botf_intro_done');
+        localStorage.removeItem('botf_pending_region');
+        set((state: any) => {
+        const newStats = { ...state.playersStats };
+        const players = ['player1','player2','player3','player4'];
+
+        // Restore all players to full HP, revive them
+        players.forEach(p => {
+            const es = { ...newStats[p] };
+            es.hp = es.maxHp || es.hp;
+            es.shield = 0; es.shieldStacks = [];
+            newStats[p] = es;
+        });
+
+        // Restore boss to full HP
+        const bosses: any = { ...newStats.boss };
+        bosses.hp = bosses.maxHp || bosses.hp;
+        bosses.shield = 0; bosses.shieldStacks = [];
+        newStats.boss   = bosses;
+        newStats.boss2  = { hp: 0, atk: 0, mag: 0, def: 0, maxHp: 0, shield: 0, shieldStacks: [] };
+
+        return {
+            playersStats: newStats,
+            deadEntities: new Set<string>(),
+            deadPlayers:  new Set<string>(),
+            deadBosses:   new Set<string>(),
+            cooldowns: { player1: {}, player2: {}, player3: {}, player4: {} },
+            mandirigmaRageBuff: { turnsLeft: 0, dmgIncrease: 0, defIgnore: 0 },
+            baganiLastStandBuff: { turnsLeft: 0, defIncrease: 0 },
+            bathalaMandateBuff:  { turnsLeft: 0, defIncrease: 0 },
+            daybreakFuryBuff:    { turnsLeft: 0, atkIncrease: 0, defIgnore: 0 },
+            blessingBuff: {}, focusAimBuff: {}, strengthenedBuff: {},
+            bossInvulnerable: { turnsLeft: 0 },
+            bonecrackedDebuffs: {}, bindDebuffs: {}, moonfallDebuffs: {},
+            eyeDragonDebuffs: {}, devouredDebuffs: {},
+            actedThisTurn: new Set<string>(),
+            tauntBuff: { turnsLeft: 0 },
+            bakunawaPhase2Active: false,
+            currentRound: 1,
+            actionLog: [],
+            setupLocked: false,
+            turnSequence: ['player1','player2','player3','player4'],
+            currentTurnIndex: -1,
+            gamePhase: 'setup',
+            selectedRegion: null,
+            activeBanner: null,
+            turnOrderConfig: {
+                player1: { preset: 'glassCanon', order: 1 },
+                player2: { preset: 'wall',       order: 2 },
+                player3: { preset: 'pureHealer', order: 3 },
+                player4: { preset: 'sniper',     order: 4 },
+            },
+        };
+    });
+    },
+
     setDungeonBuff: (buffNum: number, value: boolean) => set({ [`dungeonBuff${buffNum}Active`]: value }),
     setCrit: (value: boolean) => set({ critActive: value }),
+
+    enterRegion: (regionId: string) => {
+        const REGION_CFG: Record<string,{mini:string;main:string}> = {
+            daragangmagayon: { mini: 'Tiyanak',    main: 'Apolaki'  },
+            dagatkabisayaan: { mini: 'Siren',       main: 'Bakunawa' },
+            bundokpulag:     { mini: 'Manananggal', main: 'Mayari'   },
+            kaluwalhatian:   { mini: 'Kapre',       main: 'Bathala'  },
+        };
+        const cfg = REGION_CFG[regionId];
+        if (!cfg) return;
+        get().applyPreset('boss', cfg.mini);
+        set({ gamePhase: 'battle', selectedRegion: regionId, activeBanner: 'miniboss' });
+        setTimeout(() => { if ((get() as any).activeBanner === 'miniboss') set({ activeBanner: null }); }, 4000);
+    },
+    triggerBanner: (name: string) => set({ activeBanner: name }),
+    clearBanner: () => set({ activeBanner: null }),
+
+    // ---- turn order actions ----
+    updateSetupConfig: (playerId: string, field: string, value: any) => set((state: any) => ({
+        turnOrderConfig: {
+            ...state.turnOrderConfig,
+            [playerId]: { ...state.turnOrderConfig[playerId], [field]: value },
+        },
+    })),
+
+    confirmSetup: () => {
+        const state = get();
+        const config = state.turnOrderConfig;
+        const players = ['player1','player2','player3','player4'];
+        const sorted = [...players].sort((a, b) => (config[a]?.order ?? 99) - (config[b]?.order ?? 99));
+        sorted.forEach(p => get().applyPreset(p, config[p]?.preset || 'glassCanon'));
+        const post = get();
+        let startIdx = 0;
+        while (startIdx < 4 && post.deadEntities.has(sorted[startIdx])) startIdx++;
+        set({ setupLocked: true, turnSequence: sorted, currentTurnIndex: startIdx, gamePhase: 'map' });
+    },
+
+    advanceTurn: () => {
+        if (!get().setupLocked) return;
+        let idx = get().currentTurnIndex + 1;
+        const seq = get().turnSequence;
+
+        // Returns true if a given turn slot belongs to a dead entity
+        const isSlotDead = (i: number): boolean => {
+            const dead = get().deadEntities;
+            const phase2 = get().bakunawaPhase2Active;
+            if (i < 4) return dead.has(seq[i]);
+            // index 4 = Minokawa (phase2) or boss attack-1 (normal)
+            if (i === 4) return phase2 ? dead.has('boss2') : dead.has('boss');
+            // index 5 = Bakunawa (phase2) or boss attack-2 (normal)
+            if (i === 5) return dead.has('boss');
+            return false;
+        };
+
+        // Skip dead slots (players 0-3 AND boss slots 4-5)
+        while (idx < 6 && isSlotDead(idx)) idx++;
+
+        if (idx >= 6) {
+            // End of round — find first alive slot for next round
+            get().endRound();
+            let startIdx = 0;
+            while (startIdx < 6 && isSlotDead(startIdx)) startIdx++;
+            set({ currentTurnIndex: startIdx < 6 ? startIdx : 0 });
+            return;
+        }
+        set({ currentTurnIndex: idx });
+    },
 
     // ---- buff setters ----
     setMandirigmaRage: (turnsLeft: number, dmgIncrease: number, defIgnore: number) =>
@@ -529,6 +751,13 @@ export const useGameStore = create((set, get: any) => ({
             moonfallDebuffs: s.moonfallDebuffs,
             eyeDragonDebuffs: s.eyeDragonDebuffs,
             devouredDebuffs: s.devouredDebuffs,
+            setupLocked: s.setupLocked,
+            turnSequence: s.turnSequence,
+            currentTurnIndex: s.currentTurnIndex,
+            gamePhase: s.gamePhase,
+            selectedRegion: s.selectedRegion,
+            activeBanner: s.activeBanner,
+            deadBosses: Array.from(s.deadBosses),
             timestamp: Date.now(),
         };
         try { localStorage.setItem('botf_game_state', JSON.stringify(gameState)); } catch (_) {}

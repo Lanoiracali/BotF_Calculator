@@ -1,0 +1,73 @@
+﻿/* Map section — left 1344px column, relative for absolute children */
+.map-section {
+    position: relative;
+    width: 1344px;
+    height: 1080px;
+    overflow: hidden;
+}
+
+/* Invisible hover hotspot over a map region */
+.map-hotspot {
+    position: absolute;
+    cursor: pointer;
+    border-radius: 8px;
+    /* Uncomment below to debug hotspot positions: */
+    /* background: rgba(255,0,0,0.2); border: 1px solid red; */
+}
+
+/* Full-screen overlay image — covers the entire 1920x1080 fixed-layout */
+.map-overlay-fullscreen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1920px;
+    height: 1080px;
+    object-fit: fill;
+    pointer-events: none;
+    z-index: 50;
+    animation: map-overlay-fadein 0.15s ease;
+}
+
+@keyframes map-overlay-fadein {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Locked region — greyed out, not clickable */
+.map-hotspot--locked {
+    cursor: not-allowed;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 8px;
+}
+
+/* Kaluwalhatian locked — blocked but no dark overlay (it's hidden behind the map art) */
+.map-hotspot--locked-hidden {
+    cursor: not-allowed;
+}
+
+/* Setup-not-confirmed overlay */
+.map-phase-lock-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    pointer-events: none;
+}
+.map-phase-lock-overlay span {
+    color: #ffd700;
+    font-size: 48px;
+    font-family: 'MedievalSharp', serif;
+    text-shadow: 0 2px 12px #000;
+    letter-spacing: 2px;
+}
+
+/* Full-screen loading video (sits outside the scaled container) */
+.loading-video-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: #000;
+}

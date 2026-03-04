@@ -49,6 +49,22 @@ body {
     min-height: 20px;
 }
 
+.status-effects-section-dual .status-effects.debuffs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-height: 20px;
+    margin-top: 0 !important;
+}
+
+.status-effects-section-dual .status-effects.buffs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    min-height: 20px;
+    margin-top: 5px !important;
+}
+
 .status-effect {
     padding: 2px 6px;
     border-radius: 12px;

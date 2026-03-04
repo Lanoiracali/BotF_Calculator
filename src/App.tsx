@@ -2,6 +2,7 @@ import { Component } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Admin } from './pages/Admin';
 import { Viewer } from './pages/Viewer';
+import { Map } from './pages/Map';
 
 class ErrorBoundary extends Component<{ children: any }, { error: Error | null }> {
     state = { error: null as Error | null };
@@ -24,6 +25,7 @@ export default function App() {
             <BrowserRouter basename={import.meta.env.BASE_URL}>
                 <Routes>
                     <Route path="/admin" element={<Admin />} />
+                    <Route path="/map" element={<Map />} />
                     <Route path="/" element={<Viewer />} />
                 </Routes>
             </BrowserRouter>

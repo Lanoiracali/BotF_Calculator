@@ -2,16 +2,18 @@ import { collectEffects } from '../../hooks/useBuffs';
 
 const BASE = import.meta.env.BASE_URL;
 
+const TURN_OUTLINE = `${BASE}asset/turnOutline.gif`;
+
 const BOSS_IMAGE_MAP = {
-    Bathala:     `${BASE}asset/ALL CARDS/BOSS CARDS/bathalaFinal.jpg`,
-    Mayari:      `${BASE}asset/ALL CARDS/BOSS CARDS/mayariFinal.jpg`,
-    Apolaki:     `${BASE}asset/ALL CARDS/BOSS CARDS/apolakiFinal.jpg`,
-    Bakunawa:    `${BASE}asset/ALL CARDS/BOSS CARDS/bakunawaFinal.jpg`,
-    Minokawa:    `${BASE}asset/ALL CARDS/BOSS CARDS/minokawaFinal.jpg`,
-    Manananggal: `${BASE}asset/ALL CARDS/BOSS CARDS/manananggalFinal.jpg`,
-    Tiyanak:     `${BASE}asset/ALL CARDS/BOSS CARDS/tiyanakFinal.jpg`,
-    Siren:       `${BASE}asset/ALL CARDS/BOSS CARDS/sirenFinal.jpg`,
-    Kapre:       `${BASE}asset/ALL CARDS/BOSS CARDS/kapreFinal.jpg`,
+    Bathala:     `${BASE}asset/ANIMATION ON CARDS/Bathala.gif`,
+    Mayari:      `${BASE}asset/ANIMATION ON CARDS/Mayari.gif`,
+    Apolaki:     `${BASE}asset/ANIMATION ON CARDS/Apolak.gif`,
+    Bakunawa:    `${BASE}asset/ANIMATION ON CARDS/Bakunawa.gif`,
+    Minokawa:    `${BASE}asset/ANIMATION ON CARDS/Minokawa.gif`,
+    Manananggal: `${BASE}asset/ANIMATION ON CARDS/Mananangal.gif`,
+    Tiyanak:     `${BASE}asset/ANIMATION ON CARDS/Tiyanak.gif`,
+    Siren:       `${BASE}asset/ANIMATION ON CARDS/Sirena.gif`,
+    Kapre:       `${BASE}asset/ANIMATION ON CARDS/Kapre.gif`,
 };
 
 function HPSection({ stats, bossId }) {
@@ -69,6 +71,11 @@ function extractSkillName(logEntry) {
 export function BossCard({ gameState }) {
     const phase2      = gameState?.bakunawaPhase2Active;
     const currentBoss = gameState?.currentBoss ?? 'Bathala';
+    const setupLocked = gameState?.setupLocked ?? false;
+    const turnIdx     = gameState?.currentTurnIndex ?? -1;
+    // Turn active flags
+    const isBakuActiveTurn  = setupLocked && (phase2 ? turnIdx === 5 : (turnIdx === 4 || turnIdx === 5));
+    const isMinoActiveTurn  = setupLocked && turnIdx === 4;
     const bossStats   = gameState?.playersStats?.boss;
     const boss2Stats  = gameState?.playersStats?.boss2;
     const deadList    = Array.isArray(gameState?.deadEntities) ? gameState.deadEntities : [];
@@ -101,7 +108,13 @@ export function BossCard({ gameState }) {
                 {/* Bakunawa card — left column */}
                 <div className={`boss-card${isBossDead ? ' dead' : ''}`} id="boss-card">
                     <div className="boss-portrait-dual">
-                        <img src={BOSS_IMAGE_MAP.Bakunawa} alt="Bakunawa" className="boss-image-dual" />
+                        <div style={{ position: 'relative', display: 'inline-block' }}>
+                            <img src={BOSS_IMAGE_MAP.Bakunawa} alt="Bakunawa" className="boss-image-dual" />
+                            {isBakuActiveTurn && (
+                                <img src={TURN_OUTLINE} alt="active turn"
+                                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'fill', pointerEvents: 'none', zIndex: 10 }} />
+                            )}
+                        </div>
                     </div>
                     <div className="boss-stats-dual">
                         <HPSection stats={bossStats} bossId="boss" />
@@ -115,7 +128,13 @@ export function BossCard({ gameState }) {
                 {/* Minokawa card — right column */}
                 <div className={`boss-card${isBoss2Dead ? ' dead' : ''}`} id="boss2-card">
                     <div className="boss-portrait-dual">
-                        <img src={BOSS_IMAGE_MAP.Minokawa} alt="Minokawa" className="boss-image-dual" />
+                        <div style={{ position: 'relative', display: 'inline-block' }}>
+                            <img src={BOSS_IMAGE_MAP.Minokawa} alt="Minokawa" className="boss-image-dual" />
+                            {isMinoActiveTurn && (
+                                <img src={TURN_OUTLINE} alt="active turn"
+                                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'fill', pointerEvents: 'none', zIndex: 10 }} />
+                            )}
+                        </div>
                     </div>
                     <div className="boss-stats-dual">
                         <HPSection stats={boss2Stats} bossId="boss2" />
@@ -143,12 +162,18 @@ export function BossCard({ gameState }) {
     return (
         <div className={`boss-card${isBossDead ? ' dead' : ''}`} id="boss-card">
             <div className="boss-portrait">
-                <img
-                    src={BOSS_IMAGE_MAP[currentBoss] || BOSS_IMAGE_MAP.Bathala}
-                    alt={currentBoss}
-                    className="boss-image"
-                    id="boss-image"
-                />
+                <div style={{ position: 'relative', display: 'inline-block' }}>
+                    <img
+                        src={BOSS_IMAGE_MAP[currentBoss] || BOSS_IMAGE_MAP.Bathala}
+                        alt={currentBoss}
+                        className="boss-image"
+                        id="boss-image"
+                    />
+                    {isBakuActiveTurn && (
+                        <img src={TURN_OUTLINE} alt="active turn"
+                            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'fill', pointerEvents: 'none', zIndex: 10 }} />
+                    )}
+                </div>
             </div>
 
             <div className="boss-stats">
