@@ -1,73 +1,71 @@
-# React + TypeScript + Vite
+# BotF Calculator
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React + TypeScript + Vite web app for the Balangay of the Forgotten (BotF) game calculator.
 
-Currently, two official plugins are available:
+## Getting Started
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Prerequisites
 
-## React Compiler
+Make sure you have the following installed before proceeding:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- [Node.js](https://nodejs.org/) (v18 or higher recommended)
+- [Git](https://git-scm.com/)
+- npm (comes bundled with Node.js)
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 1. Clone the Repository
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Open a terminal and run:
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+git clone https://github.com/LanoiraCutie/BotF_Calculator
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Then navigate into the project folder:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cd BotF_Calculator
 ```
+
+---
+
+### 2. Pull Latest Changes (if already cloned)
+
+If you already have the repo cloned and just want the latest updates:
+
+```bash
+git pull origin main
+```
+
+> Replace `main` with your branch name if different (e.g. `master` or `dev`).
+
+---
+
+### 3. Install Dependencies
+
+```bash
+npm install
+```
+
+---
+
+### 4. Run the Development Server
+
+```bash
+npm run dev
+```
+
+The app will be available at **http://localhost:5173** by default. The terminal output will show the exact URL.
+
+---
+
+### Other Useful Commands
+
+| Command | Description |
+|---|---|
+| `npm run build` | Build for production |
+| `npm run preview` | Preview the production build locally |
+| `npm run lint` | Run ESLint checks |
+
+---
