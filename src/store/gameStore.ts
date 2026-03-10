@@ -190,10 +190,6 @@ export const useGameStore = create((set, get: any) => ({
       // ---- post-update: auto boss-switch, victory, defeat triggers ----
       const MINI_BOSSES = new Set(['Tiyanak', 'Siren', 'Manananggal', 'Kapre']);
       const MAIN_BOSSES = new Set(['Apolaki', 'Bakunawa', 'Mayari', 'Bathala']);
-      const REGION_MAIN: Record<string,string> = {
-          daragangmagayon: 'Apolaki', dagatkabisayaan: 'Bakunawa',
-          bundokpulag: 'Mayari',     kaluwalhatian:   'Bathala',
-      };
       const PLAYERS = ['player1','player2','player3','player4'];
       const s = get();
       if (s.gamePhase !== 'battle') return;
