@@ -24,6 +24,11 @@ const BANNER_IMG: Record<string, string> = {
 
 export function Viewer() {
     const navigate = useNavigate();
+    
+    useEffect(() => {
+        document.title = 'Balangay of the Forgotten';
+    }, []);
+
     const [gameState, setGameState] = useState<any>(null);
     const prevPhaseRef = useRef<string | null>(null);
 

@@ -67,6 +67,10 @@ const REGIONS = [
 export function Map() {
     const navigate = useNavigate();
 
+    useEffect(() => {
+        document.title = 'Balangay of the Forgotten';
+    }, []);
+
     const [localState, setLocalState] = useState<any>(getLocalState);
 
     // ---- Intro sequence state machine ----
