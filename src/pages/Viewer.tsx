@@ -162,7 +162,7 @@ export function Viewer() {
             {showEnding && !endingDone && (
                 <div className="loading-video-overlay">
                     <video
-                        src={`${import.meta.env.BASE_URL}asset/LOADINGSCREEN/ending.mp4`}
+                        src="https://res.cloudinary.com/dsjgm3swn/video/upload/v1780174146/ending_f3kq2r.mp4"
                         autoPlay
                         onEnded={() => { setShowEnding(false); setEndingDone(true); }}
                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
