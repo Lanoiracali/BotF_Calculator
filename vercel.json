@@ -1,0 +1,6 @@
+{
+  "name": "botf-calculator",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
