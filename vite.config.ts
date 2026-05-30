@@ -8,5 +8,5 @@ export default defineConfig({
   publicDir: 'src/assets',
   // Set base to the GitHub repo name so asset paths are correct on GitHub Pages.
   // If your repo is named differently, update this value.
-  base: '/BotF_Calculator/',
+  base: '/',
 })
