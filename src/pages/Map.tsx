@@ -23,10 +23,10 @@ const BOSS_IMAGE_MAP: Record<string, string> = {
 };
 
 const LOADING_MAP: Record<string, string> = {
-    daragangmagayon: `${BASE}asset/LOADINGSCREEN/loadingApolaki.mp4`,
-    dagatkabisayaan: `${BASE}asset/LOADINGSCREEN/loadingBakunawa.mp4`,
-    bundokpulag:     `${BASE}asset/LOADINGSCREEN/loadingMayari.mp4`,
-    kaluwalhatian:   `${BASE}asset/LOADINGSCREEN/loadingBathala.mp4`,
+    daragangmagayon: 'https://res.cloudinary.com/dsjgm3swn/video/upload/v1780171143/loadingApolaki_y6pydy.mp4',
+    dagatkabisayaan: 'https://res.cloudinary.com/dsjgm3swn/video/upload/v1780171142/loadingBakunawa_zoz9jf.mp4',
+    bundokpulag:     'https://res.cloudinary.com/dsjgm3swn/video/upload/v1780171147/loadingMayari_sxxhdq.mp4',
+    kaluwalhatian:   'https://res.cloudinary.com/dsjgm3swn/video/upload/v1780171149/loadingBathala_srn5t6.mp4',
 };
 
 const INTRO_SRCS: Record<IntroStep, string> = {
