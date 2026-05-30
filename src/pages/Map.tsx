@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../viewer.css';
 import './Map.css';
@@ -30,10 +30,10 @@ const LOADING_MAP: Record<string, string> = {
 };
 
 const INTRO_SRCS: Record<IntroStep, string> = {
-    intro:        `${BASE}asset/LOADINGSCREEN/intro.mp4`,
-    ptc:          `${BASE}asset/LOADINGSCREEN/presstocontinue.mp4`,
-    lore1:        `${BASE}asset/LOADINGSCREEN/game_lore1.mp4`,
-    loading_wait: `${BASE}asset/LOADINGSCREEN/loading.mp4`,
+    intro:        'https://res.cloudinary.com/dsjgm3swn/video/upload/v1780171147/intro_ge5xk1.mp4',
+    ptc:          'https://res.cloudinary.com/dsjgm3swn/video/upload/v1780171149/presstocontinue_dxwgkj.mp4',
+    lore1:        'https://res.cloudinary.com/dsjgm3swn/video/upload/v1780171156/game_lore1_uvbnha.mp4',
+    loading_wait: 'https://res.cloudinary.com/dsjgm3swn/video/upload/v1780171146/loading_o9epy8.mp4',
     done:         '',
 };
 
